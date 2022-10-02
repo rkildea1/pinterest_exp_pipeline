@@ -1,0 +1,6 @@
+project_pin_API.py
+*.ipynb
+*cache*
+*.pyc
+passwords.py
+README local.md
