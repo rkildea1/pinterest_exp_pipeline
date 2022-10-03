@@ -32,7 +32,9 @@ def get_db_row(item: Data):
     client_id="Streaming Upload Producer",
     value_serializer=lambda streaming_upload_record: dumps(streaming_upload_record).encode("ascii")
     ) 
-    pinterest_upload_producer.send(topic="pinterest_streaming_uploads", value=streaming_upload_record)
+    # pinterest_upload_producer.send(topic="pinterest_streaming_uploads", value=streaming_upload_record)
+
+    pinterest_upload_producer.send(topic="pinterestpipeline", value=streaming_upload_record)
 
     return streaming_upload_record
 

@@ -8,6 +8,8 @@ data_stream_consumer = KafkaConsumer(
     auto_offset_reset="earliest" # This value ensures the messages are read from the beginning 
 )
 
-data_stream_consumer.subscribe(topics=["pinterest_streaming_uploads"])
+# data_stream_consumer.subscribe(topics=["pinterest_streaming_uploads"])
+data_stream_consumer.subscribe(topics=["pinterestpipeline"])
+
 for message in data_stream_consumer:
     print(message)
