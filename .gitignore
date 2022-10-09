@@ -4,3 +4,4 @@ project_pin_API.py
 *.pyc
 passwords.py
 README local.md
+workbooks/

@@ -4,6 +4,7 @@ import boto3
 from json import dumps
 import passwords
 
+aws_s3_bucket_name = passwords.aws_s3_bucket_name
 s3client = boto3.client('s3', 
                         aws_access_key_id=passwords.aws_access_key_id, 
                         aws_secret_access_key=passwords.aws_secret_access_key
@@ -22,7 +23,7 @@ data_stream_consumer.subscribe(topics=["pinterestpipeline"])
 for message in data_stream_consumer:
     json_file = message.value
     filename = (message.value['unique_id'])+'.json'
-    s3client.put_object(Body=dumps(json_file),Bucket='pinterestdata83436ecb',Key=filename)
+    s3client.put_object(Body=dumps(json_file),Bucket=aws_s3_bucket_name,Key=filename)
     print(f'...filename: {filename} was uploaded')
 
 
