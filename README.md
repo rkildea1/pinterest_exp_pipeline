@@ -16,9 +16,10 @@ HOST = HOST
 USER = HOST
 PASSWORD = PASSWORD
 DATABASE = DATABASE
-PORT = PORT```
+PORT = PORT
 
 S3 details for writing to the S3 bucket
 aws_access_key_id = aws_access_key_id
 aws_secret_access_key = aws_secret_access_key
 aws_s3_bucket_name = aws_s3_bucket_name
+```
