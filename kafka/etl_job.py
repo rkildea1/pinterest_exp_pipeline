@@ -11,9 +11,8 @@ from pyspark.sql.functions import col, split, size #needed for etl1
 from pyspark.sql.functions import * #needed for etl3
 
 
-# Adding the additional spark packages `aws-java-sdk` and `hadoop-aws` required to get data from S3  
-os.environ["PYSPARK_SUBMIT_ARGS"] = "--packages com.amazonaws:aws-java-sdk-s3:1.12.196,org.apache.hadoop:hadoop-aws:3.3.1 pyspark-shell"
-
+# Adding the additional spark packages `aws-java-sdk` and `hadoop-aws` required to get data from S3 and `spark-cassandra-connector` to write to cassandra
+os.environ['PYSPARK_SUBMIT_ARGS'] ="--packages com.amazonaws:aws-java-sdk-s3:1.12.196,org.apache.hadoop:hadoop-aws:3.3.1,com.datastax.spark:spark-cassandra-connector_2.12:3.2.0 pyspark-shell"
 
 # Creating  Spark configuration
 conf = SparkConf() \
@@ -34,9 +33,9 @@ hadoopConf.set('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoo
 spark=SparkSession(sc)
 
 # Read from the S3 bucket
-df = spark.read.json('s3a://pinterestdata83436ecb/*.json') # You may want to change this to read csv depending on the files your reading from the bucket
+df = spark.read.json('s3a://pinterestdata83436ecb/*.json') 
 
-# create new column with the count of tags
+# # create new column with the count of tags
 #ETLjob 1: create a new column with the count of tags
 df = df.withColumn('count_of_tags', size(split(col("tag_list"), r",")))
 #ETLJob 2: conver the tag_list column to an array
@@ -44,7 +43,11 @@ df = df.withColumn('tag_list', split(col("tag_list"), ",\s*"))
 #ETLJob 3: convert the is_image_or_video column string to single chars
 df = df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'image', 'i')) #change word image to i
 df =df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'video', 'v')) #change word video to v
+#ETLJob 4: rename index column to source_index 
+df = df.withColumnRenamed("index", "source_index")
+# df.printSchema()
 
-df.printSchema()
+# df.show(5)
 
-df.show(5)
+df.write.format("org.apache.spark.sql.cassandra")\
+  .options(table="data", keyspace="pinterest_ks").mode("append").save()

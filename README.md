@@ -1,9 +1,12 @@
 # pinterest_exp_pipeline
-### use sample data for emulating pinterest streaming uploads and post the records to localhost using FastAPI, Hadoop, Spark, S3
-### push the posts to localhost to the consumer using the Kafka producer
-### two consumers are configured (one for batch and one for streaming)
-### the Kafka batch consumer extracts the records as dicts and puts them to s3 as jsons
-### Using PySpark and AWS_Hadoop package to read and clean the batch records
+
+1. using sample data for emulating pinterest streaming uploads and post the records to localhost using FastAPI, Hadoop, Spark, S3
+2. push the posts to localhost, to the consumer using the Kafka producer
+3. two consumers are configured (one for batch and one for streaming)
+4. the Kafka batch consumer extracts the records as dicts and puts them to s3 as jsons
+5. Using PySpark and AWS_Hadoop package to read and clean the batch records
+6. Using the cassandra connector to write the records to cassandra
+
 
 
 
