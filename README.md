@@ -11,12 +11,12 @@
 
 
 ## Passwords file referenced: 
-Source details for user emulation data to stream from
+```Source details for user emulation data to stream from
 HOST = HOST
 USER = HOST
 PASSWORD = PASSWORD
 DATABASE = DATABASE
-PORT = PORT
+PORT = PORT```
 
 S3 details for writing to the S3 bucket
 aws_access_key_id = aws_access_key_id
