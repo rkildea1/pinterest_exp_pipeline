@@ -67,7 +67,7 @@ def etl():
   df = df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'video', 'v')) #change word video to v
   #ETLJob 4: rename index column to source_index 
   df = df.withColumnRenamed("index", "source_index")
-  df.to_json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
+  df.write.json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
   #  # df.printSchema()
   df.show(5)
 
