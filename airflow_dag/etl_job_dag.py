@@ -1,18 +1,19 @@
 ### Use hadoop and spark to read from s3 and clean each record
 import os
 import findspark
-from sklearn.linear_model import PassiveAggressiveClassifier
 findspark.init('/Users/ronan/spark-3.2.2-bin-hadoop3.2')
 import passwords
 from datetime import datetime
-from datetime import timedelta
 from airflow import DAG
 from pyspark.sql import SparkSession
 from pyspark import SparkContext, SparkConf
 from pyspark.sql.functions import col, split, size #needed for etl1
 from pyspark.sql.functions import *
 from airflow.operators.python import PythonOperator
-
+from airflow.operators.bash_operator import BashOperator
+from airflow.models import Variable
+temp_storage_path = Variable.get("temp_storage_path")
+temp_storage_file = Variable.get("temp_storage_file")
 
 default_args = {
     'owner': 'Ronan',
@@ -20,15 +21,17 @@ default_args = {
     'email': ['ronan@gmail.com'],
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 1,
+    # 'retries': 1,
     'start_date': datetime(2022, 10,18), 
-    'retry_delay': timedelta(seconds=60),
-    'end_date': datetime(2022, 10, 19),
+    # 'retry_delay': timedelta(seconds=60),
+    # 'end_date': datetime(2022, 10, 19),
+
 }
 dag = DAG(dag_id='_pinterest_batch_etl',
          default_args=default_args,
-         schedule_interval='*/5 * * * *',
-         catchup=False,
+        #  schedule_interval='*/5 * * * *',
+        schedule_interval="@once",
+        catchup=False,
          )
 
 # Adding the additional spark packages `aws-java-sdk` and `hadoop-aws` required to get data from S3 and `spark-cassandra-connector` to write to cassandra
@@ -52,10 +55,8 @@ hadoopConf.set('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoo
 # Create  Spark session
 spark=SparkSession(sc)
 
-def write_to_json():
-  pass
-
 def etl():
+  """read from s3 and store locally"""
   # Read from the S3 bucket
   df = spark.read.json('s3a://pinterestdata83436ecb/*.json') 
   # # create new column with the count of tags
@@ -68,39 +69,39 @@ def etl():
   df = df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'video', 'v')) #change word video to v
   #ETLJob 4: rename index column to source_index 
   df = df.withColumnRenamed("index", "source_index")
-  df.to_json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
-  #  # df.printSchema()
-  df.show(5)
+  print(f'{temp_storage_path}{temp_storage_file}')
+  df.write.json(f'{temp_storage_path}{temp_storage_file}') 
+  df.printSchema()
+  df.show(5) # just a test 
 
 
 def write_to_cassandra():
-  df = df.read_json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
-  df.show(5)
-  # df.write.format("org.apache.spark.sql.cassandra")\
-  # .options(table="data", keyspace="pinterest_ks").mode("append").save()
+  df = spark.read.json(f'{temp_storage_path}{temp_storage_file}') 
+  df.write.format("org.apache.spark.sql.cassandra")\
+  .options(table="data", keyspace="pinterest_ks").mode("append").save()
+  df.show(5) #just a test
   pass
 
-#Airflow jobs 
 
-task_job_1 = PythonOperator(
+
+#Airflow jobs 
+task_job_1 = BashOperator(
+    task_id='delete_temporary_storage',
+    bash_command=f'cd {temp_storage_path} && rm -r {temp_storage_file}',
+    dag=dag)
+
+task_job_2 = PythonOperator(
     task_id='etl',
     python_callable= etl,
     dag=dag)
 
-task_job_2 = PythonOperator(
+task_job_3 = PythonOperator(
     task_id='write_to_cassandra',
     python_callable= write_to_cassandra,
     dag=dag)
 
 #tasks schedule
-task_job_1 >> task_job_2
-
-
-
-
-
-
-
+task_job_1 >> task_job_2 >> task_job_3
 
 
 
