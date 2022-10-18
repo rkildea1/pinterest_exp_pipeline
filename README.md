@@ -5,8 +5,6 @@
 3. two consumers are configured (one for batch and one for streaming)
 4. the Kafka batch consumer extracts the records as dicts and puts them to s3 as jsons
 5. Using PySpark and AWS_Hadoop package to read and clean the batch records over Airflow. Pushing cleaned data to Cassandra
-6. 
-7. 
 
 
 
