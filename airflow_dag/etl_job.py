@@ -5,6 +5,7 @@ findspark.init('/Users/ronan/spark-3.2.2-bin-hadoop3.2')
 import passwords
 from datetime import datetime
 from datetime import timedelta
+from airflow import DAG
 from pyspark.sql import SparkSession
 from pyspark import SparkContext, SparkConf
 from pyspark.sql.functions import col, split, size #needed for etl1
