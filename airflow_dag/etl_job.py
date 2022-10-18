@@ -1,6 +1,7 @@
 ### Use hadoop and spark to read from s3 and clean each record
 import os
 import findspark
+from sklearn.linear_model import PassiveAggressiveClassifier
 findspark.init('/Users/ronan/spark-3.2.2-bin-hadoop3.2')
 import passwords
 from datetime import datetime
@@ -33,37 +34,28 @@ dag = DAG(dag_id='_pinterest_batch_etl',
 # Adding the additional spark packages `aws-java-sdk` and `hadoop-aws` required to get data from S3 and `spark-cassandra-connector` to write to cassandra
 os.environ['PYSPARK_SUBMIT_ARGS'] ="--packages com.amazonaws:aws-java-sdk-s3:1.12.196,org.apache.hadoop:hadoop-aws:3.3.1,com.datastax.spark:spark-cassandra-connector_2.12:3.2.0 pyspark-shell"
 
-
-
-# Python Jobs 
-def create_spark_configuration(ti):
-  """ Creating Spark configuration """
-  conf = SparkConf() \
+# Creating  Spark configuration
+conf = SparkConf() \
     .setAppName('S3toSpark') \
     .setMaster('local[*]')
-  sc=SparkContext(conf=conf)
-  ti.xcom_push(key='sc', value=sc)
 
+sc=SparkContext(conf=conf)
 
-def s3_reader_configuration(ti):
-  """ Configure the setting to read from the S3 bucket """
-  accessKeyId=passwords.aws_access_key_id
-  secretAccessKey=passwords.aws_secret_access_key
-  sc = ti.xcom_pull(key='sc')
-  hadoopConf = sc._jsc.hadoopConfiguration()
-  hadoopConf.set('fs.s3a.access.key', accessKeyId)
-  hadoopConf.set('fs.s3a.secret.key', secretAccessKey)
-  hadoopConf.set('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider') # Allows the package to authenticate with AWS
+# Configure the setting to read from the S3 bucket
+accessKeyId=passwords.aws_access_key_id
+secretAccessKey=passwords.aws_secret_access_key
+hadoopConf = sc._jsc.hadoopConfiguration()
+hadoopConf.set('fs.s3a.access.key', accessKeyId)
+hadoopConf.set('fs.s3a.secret.key', secretAccessKey)
+hadoopConf.set('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider') # Allows the package to authenticate with AWS
 
-def create_spark_session(ti):
-  """Create a spark session"""
-  sc = ti.xcom_pull(key='sc')
-  spark=SparkSession(sc)
-  ti.xcom_push(key='spark', value=spark)
+# Create  Spark session
+spark=SparkSession(sc)
 
-def etl(ti):
-  spark = ti.xcom_pull(key='spark')
+def write_to_json():
+  pass
 
+def etl():
   # Read from the S3 bucket
   df = spark.read.json('s3a://pinterestdata83436ecb/*.json') 
   # # create new column with the count of tags
@@ -76,34 +68,32 @@ def etl(ti):
   df = df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'video', 'v')) #change word video to v
   #ETLJob 4: rename index column to source_index 
   df = df.withColumnRenamed("index", "source_index")
-  # df.printSchema()
+  df.to_json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
+  #  # df.printSchema()
   df.show(5)
 
 
+def write_to_cassandra():
+  df = df.read_json('/Users/ronan/Desktop/GitHub/pinterest_exp_pipeline/airflow_dag/temp_storage/etl_output.json') 
+  df.show(5)
+  # df.write.format("org.apache.spark.sql.cassandra")\
+  # .options(table="data", keyspace="pinterest_ks").mode("append").save()
+  pass
 
 #Airflow jobs 
+
 task_job_1 = PythonOperator(
-    task_id='create_spark_configuration',
-    python_callable= create_spark_configuration,
-    dag=dag)
-
-task_job_2 = PythonOperator(
-    task_id='s3_reader_configuration',
-    python_callable= s3_reader_configuration,
-    dag=dag)
-
-task_job_3 = PythonOperator(
-    task_id='create_spark_session',
-    python_callable= create_spark_session,
-    dag=dag)
-
-task_job_4 = PythonOperator(
     task_id='etl',
     python_callable= etl,
     dag=dag)
 
+task_job_2 = PythonOperator(
+    task_id='write_to_cassandra',
+    python_callable= write_to_cassandra,
+    dag=dag)
+
 #tasks schedule
-task_job_1 >> task_job_2 >> task_job_3 >> task_job_4
+task_job_1 >> task_job_2
 
 
 
