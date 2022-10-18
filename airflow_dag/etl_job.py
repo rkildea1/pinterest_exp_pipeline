@@ -20,9 +20,9 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'start_date': datetime(2022, 10,15), 
+    'start_date': datetime(2022, 10,18), 
     'retry_delay': timedelta(seconds=60),
-    'end_date': datetime(2022, 10, 16),
+    'end_date': datetime(2022, 10, 19),
 }
 dag = DAG(dag_id='_pinterest_batch_etl',
          default_args=default_args,
