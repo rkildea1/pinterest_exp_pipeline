@@ -26,10 +26,10 @@ default_args = {
 }
 # Configure DAG
 dag = DAG(dag_id='_pinterest_batch_etl',
-         default_args=default_args,
-        #  schedule_interval='*/5 * * * *',
-        schedule_interval="@once",
-        catchup=False,
+        default_args=default_args,
+        schedule_interval='* * 0 0 0', #run once a day
+        # schedule_interval="@once",
+        catchup=False
          )
 
 
@@ -92,7 +92,3 @@ task_job_3 = BashOperator(
 
 # CONFIGURING TASKFLOW ORDER
 task_job_1 >> task_job_2 >> task_job_3
-
-
-
-
