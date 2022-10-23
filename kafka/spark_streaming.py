@@ -3,7 +3,7 @@ import findspark
 findspark.init('/Users/ronan/spark-3.2.2-bin-hadoop3.2')
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, IntegerType, StringType
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, size, split
 
 
 
@@ -47,7 +47,7 @@ stream_df = spark \
         .select(from_json(col("value").cast("string"), schema).alias("parsed_value")) \
         .select(col("parsed_value.*"))
 
-# stream_df.selectExpr()
+stream_df = stream_df.withColumn('count_of_tags', size(split(col("tag_list"), r",")))
 
 stream_df.writeStream.outputMode("append") \
     .format("console") \
