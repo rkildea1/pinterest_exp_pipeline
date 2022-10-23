@@ -49,7 +49,6 @@ df = df.withColumnRenamed("index", "source_index")
 
 df.show(5)
 
-#table schema: 
-#CREATE TABLE pinterest_ks.data ( unique_id text PRIMARY KEY, category text, count_of_tags int, description text, downloaded int, follower_count text, image_src text, is_image_or_video text, save_location text, source_index int, tag_list text, title text );
+#
 df.write.format("org.apache.spark.sql.cassandra")\
   .options(table="data", keyspace="pinterest_ks").mode("append").save()
