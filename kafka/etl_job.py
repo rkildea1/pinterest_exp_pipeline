@@ -47,8 +47,5 @@ df =df.withColumn('is_image_or_video', regexp_replace('is_image_or_video', 'vide
 df = df.withColumnRenamed("index", "source_index")
 # df.printSchema()
 
-df.show(5)
-
-#
 df.write.format("org.apache.spark.sql.cassandra")\
   .options(table="data", keyspace="pinterest_ks").mode("append").save()
